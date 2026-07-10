@@ -1,0 +1,1791 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Official TCS NQT Assessment Environment</title>
+    <style>
+      :root {
+        --tcs-blue: #0056b3;
+        --tcs-dark: #1e1e1e;
+        --tcs-gray: #f4f6f9;
+        --tcs-success: #28a745;
+        --tcs-terminal: #0f141c;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: var(--tcs-gray);
+        user-select: none;
+        overflow-x: hidden;
+      }
+      header {
+        background-color: var(--tcs-dark);
+        color: white;
+        padding: 12px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 4px solid var(--tcs-blue);
+        height: 40px;
+      }
+      .section-tab-container {
+        display: flex;
+        background: #2d2d2d;
+        padding: 5px 20px 0 20px;
+        gap: 5px;
+        overflow-x: auto;
+      }
+      .section-tab {
+        padding: 10px 15px;
+        color: #aaa;
+        background: #3a3a3a;
+        border-radius: 6px 6px 0 0;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+        cursor: not-allowed;
+        white-space: nowrap;
+      }
+      .section-tab.active {
+        background: white;
+        color: var(--tcs-dark);
+      }
+      .container {
+        display: flex;
+        height: calc(100vh - 103px);
+        position: relative;
+      }
+      .left-panel {
+        flex: 3;
+        padding: 40px;
+        overflow-y: auto;
+        background: white;
+        position: relative;
+      }
+      .right-panel {
+        flex: 1;
+        background: #ebf3fc;
+        border-left: 2px solid #d2e4f9;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      /* TCS Calculator Shell - Default Positioned Top-Right Corner */
+      .calc-trigger-btn {
+        background: #ffc107;
+        color: #1e1e1e;
+        border: none;
+        font-weight: bold;
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        margin-right: 15px;
+      }
+      .tcs-calculator {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        width: 240px;
+        background: #222;
+        border: 3px solid #444;
+        border-radius: 6px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        display: none;
+      }
+      .calc-header {
+        background: #111;
+        color: #fff;
+        padding: 8px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: move;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #333;
+        user-select: none;
+      }
+      .calc-screen {
+        width: 100%;
+        height: 45px;
+        background: #dce6d5;
+        color: #000;
+        text-align: right;
+        font-family: monospace;
+        font-size: 20px;
+        padding: 5px 10px;
+        border: none;
+        box-sizing: border-box;
+        font-weight: bold;
+        outline: none;
+      }
+      .calc-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        padding: 6px;
+        background: #222;
+      }
+      .calc-btn {
+        background: #3a3a3a;
+        color: white;
+        border: 1px solid #555;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+      }
+      .calc-btn:hover {
+        background: #4a4a4a;
+      }
+      .calc-btn.op {
+        background: #0056b3;
+      }
+      .calc-btn.op:hover {
+        background: #004085;
+      }
+      .calc-btn.clear {
+        background: #dc3545;
+      }
+      .calc-btn.clear:hover {
+        background: #bd2130;
+      }
+
+      /* Testing Panels */
+      .timer-container {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        border: 2px solid var(--tcs-blue);
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .timer-label {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+      .timer-clock {
+        font-size: 26px;
+        font-weight: bold;
+        color: var(--tcs-dark);
+        margin-top: 5px;
+      }
+      .alert-timer {
+        color: #dc3545;
+        animation: blink 1s infinite;
+        font-size: 14px;
+        font-weight: bold;
+        margin-top: 5px;
+        display: none;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .palette-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+      }
+      .palette-btn {
+        padding: 10px;
+        font-weight: bold;
+        border: 1px solid #ccc;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+      }
+      .palette-btn.active {
+        border: 2px solid var(--tcs-blue);
+        background: #d0e1f9;
+      }
+      .palette-btn.answered {
+        background: var(--tcs-success);
+        color: white;
+        border-color: var(--tcs-success);
+      }
+      .btn-action {
+        background-color: var(--tcs-blue);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        font-size: 15px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .btn-action:hover {
+        background-color: #004085;
+      }
+
+      /* Modals & Overlays */
+      .warning-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(30, 30, 30, 0.96);
+        color: white;
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .custom-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 5000;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        max-width: 450px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        color: #333;
+      }
+      .modal-title {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #dc3545;
+      }
+      .modal-text {
+        font-size: 15px;
+        margin-bottom: 20px;
+        line-height: 1.5;
+        color: #555;
+      }
+      .modal-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      textarea.essay-input,
+      textarea.code-input {
+        width: 100%;
+        height: 280px;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 16px;
+        padding: 12px;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        resize: none;
+        box-sizing: border-box;
+      }
+      .text-blank-input {
+        padding: 8px 12px;
+        font-size: 16px;
+        border: 2px solid var(--tcs-blue);
+        border-radius: 4px;
+        width: 250px;
+        margin-top: 15px;
+      }
+      .word-counter {
+        font-size: 14px;
+        color: #333;
+        font-weight: bold;
+        margin-top: 10px;
+        background: #fff3cd;
+        padding: 8px 12px;
+        border-radius: 4px;
+        border: 1px solid #ffebaa;
+        display: inline-block;
+      }
+
+      /* Summary Evaluation Screen Layout */
+      .feedback-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      .feedback-card {
+        background: #f8f9fa;
+        border-left: 5px solid var(--tcs-blue);
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      .feedback-q {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #222;
+      }
+      .feedback-a {
+        font-size: 15px;
+        background: #e9ecef;
+        padding: 10px 15px;
+        border-radius: 4px;
+        color: #0056b3;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+
+      /* Dropdown & Coding Controls */
+      .compiler-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 15px 0;
+      }
+      .lang-select {
+        padding: 8px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 4px;
+        border: 2px solid var(--tcs-blue);
+      }
+      .btn-comp {
+        background: #343a40;
+        color: #fff;
+        border: 1px solid #495057;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .btn-comp:hover {
+        background: #495057;
+      }
+      .terminal-display {
+        background: var(--tcs-terminal);
+        color: #73daca;
+        font-family: "Courier New", monospace;
+        padding: 15px;
+        border-radius: 4px;
+        height: 100px;
+        overflow-y: auto;
+        box-sizing: border-box;
+        font-size: 14px;
+        border: 2px solid #24283b;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="warningScreen" class="warning-overlay">
+      <div>
+        ⚠️ ASSESSMENT TIMERS PAUSED<br />
+        <span
+          style="
+            font-size: 16px;
+            font-weight: normal;
+            display: block;
+            margin-top: 10px;
+            color: #bbb;
+          "
+          >You shifted windows or closed the browser active focus
+          boundary.</span
+        >
+        <button
+          onclick="resumeExamSession()"
+          style="
+            margin-top: 25px;
+            padding: 12px 30px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            background: var(--tcs-blue);
+            color: white;
+            border: none;
+            border-radius: 4px;
+          "
+        >
+          Resume Assessment
+        </button>
+      </div>
+    </div>
+
+    <div id="customModal" class="custom-modal">
+      <div class="modal-content">
+        <div class="modal-title" id="modalTitle">Section Submission</div>
+        <div class="modal-text" id="modalText">
+          Are you sure you want to submit this section? Response tracking logs
+          will be locked.
+        </div>
+        <div class="modal-buttons" id="modalBtnFrame">
+          <button class="btn-action" onclick="closeCustomModal()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <header>
+      <h2>TCS Integrated NQT Environment Client</h2>
+      <div style="display: flex; align-items: center">
+        <button
+          class="calc-trigger-btn"
+          id="calcTrigger"
+          onclick="toggleCalculator()"
+        >
+          🧮 Open Calculator
+        </button>
+        <div
+          style="
+            font-size: 14px;
+            background: #333;
+            padding: 5px 15px;
+            border-radius: 4px;
+          "
+        >
+          Candidate ID: TX-2026
+        </div>
+      </div>
+    </header>
+
+    <div class="section-tab-container" id="tabsBar">
+      <button class="section-tab active" id="tab-Numerical">
+        Numerical Ability
+      </button>
+      <button class="section-tab" id="tab-Reasoning">Reasoning Ability</button>
+      <button class="section-tab" id="tab-Advanced">
+        Adv. Quant & Reasoning
+      </button>
+      <button class="section-tab" id="tab-Verbal">Verbal Ability</button>
+      <button class="section-tab" id="tab-Recall">
+        Verbal (Passage Recall)
+      </button>
+      <button class="section-tab" id="tab-Email">Business Communication</button>
+      <button class="section-tab" id="tab-Coding">
+        Advanced Coding (Easy)
+      </button>
+      <button class="section-tab" id="tab-CodingMed">
+        Advanced Coding (Medium)
+      </button>
+    </div>
+
+    <div class="container" id="mainExamWindow">
+      <div class="tcs-calculator" id="tcsCalcElement">
+        <div class="calc-header" id="tcsCalcHeader">
+          <span>TCS On-Screen Scientific Calculator</span>
+          <span
+            style="
+              cursor: pointer;
+              color: #dc3545;
+              font-weight: bold;
+              padding: 0 5px;
+            "
+            onclick="toggleCalculator()"
+            >✖</span
+          >
+        </div>
+        <input
+          type="text"
+          class="calc-screen"
+          id="calcDisplay"
+          readonly
+          value="0"
+        />
+        <div class="calc-grid">
+          <button class="calc-btn clear" onclick="clearCalc()">C</button>
+          <button class="calc-btn clear" onclick="backspaceCalc()">CE</button>
+          <button class="calc-btn op" onclick="inputCalcOp('%')">Mod</button>
+          <button class="calc-btn op" onclick="inputCalcOp('/')">/</button>
+
+          <button class="calc-btn" onclick="inputCalcNum('7')">7</button>
+          <button class="calc-btn" onclick="inputCalcNum('8')">8</button>
+          <button class="calc-btn" onclick="inputCalcNum('9')">9</button>
+          <button class="calc-btn op" onclick="inputCalcOp('*')">*</button>
+
+          <button class="calc-btn" onclick="inputCalcNum('4')">4</button>
+          <button class="calc-btn" onclick="inputCalcNum('5')">5</button>
+          <button class="calc-btn" onclick="inputCalcNum('6')">6</button>
+          <button class="calc-btn op" onclick="inputCalcOp('-')">-</button>
+
+          <button class="calc-btn" onclick="inputCalcNum('1')">1</button>
+          <button class="calc-btn" onclick="inputCalcNum('2')">2</button>
+          <button class="calc-btn" onclick="inputCalcNum('3')">3</button>
+          <button class="calc-btn op" onclick="inputCalcOp('+')">+</button>
+
+          <button class="calc-btn" onclick="inputCalcNum('0')">0</button>
+          <button class="calc-btn" onclick="inputCalcNum('.')">.</button>
+          <button class="calc-btn op" onclick="sqrtCalc()">sqrt</button>
+          <button
+            class="calc-btn op"
+            style="background: #28a745"
+            onclick="evaluateCalc('=')"
+          >
+            =
+          </button>
+        </div>
+      </div>
+
+      <div class="left-panel">
+        <h3 id="questionHeading">Question 1</h3>
+        <hr />
+        <div id="dynamicContentArea">
+          <p
+            id="questionContent"
+            style="
+              font-size: 18px;
+              line-height: 1.6;
+              min-height: 100px;
+              font-weight: 500;
+            "
+          ></p>
+          <div id="optionsFrame" style="margin-top: 25px"></div>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div>
+          <div class="timer-container">
+            <div class="timer-label" id="timerLabel">
+              Remaining Section Time
+            </div>
+            <div class="timer-clock" id="masterClock">25:00</div>
+            <div class="alert-timer" id="verbalAlert">
+              ⚠️ AUTO-ADVANCE: <span id="verbalClock">25</span>s
+            </div>
+            <div class="alert-timer" id="recallAlert" style="color: #0056b3">
+              READING PHASE: <span id="recallClock">30</span>s
+            </div>
+            <div
+              class="alert-timer"
+              id="emailPromptAlert"
+              style="color: #e67e22"
+            >
+              PROMPT DISAPPEARING: <span id="emailPromptClock">30</span>s
+            </div>
+          </div>
+
+          <div class="timer-label" id="paletteLabel">Question Palette</div>
+          <div class="palette-grid" id="paletteBox"></div>
+        </div>
+
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+          "
+        >
+          <button
+            class="btn-action"
+            id="btnPrev"
+            style="background: #6c757d"
+            onclick="prevQuestion()"
+          >
+            Previous
+          </button>
+          <button class="btn-action" id="btnNext" onclick="saveAndNext()">
+            Save & Next
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const examConfig = {
+        Numerical: {
+          label: "Numerical Ability",
+          duration: 25 * 60,
+          qCount: 20,
+          type: "mixed-math",
+          allowCalc: true,
+        },
+        Reasoning: {
+          label: "Reasoning Ability",
+          duration: 25 * 60,
+          qCount: 20,
+          type: "objective",
+          allowCalc: true,
+        },
+        Advanced: {
+          label: "Advanced Quant & Reasoning",
+          duration: 25 * 60,
+          qCount: 14,
+          type: "objective",
+          allowCalc: true,
+        },
+        // SOLVED: Aligned master section time separate from item speed-drills
+        Verbal: {
+          label: "Verbal Ability (Sentence Completion)",
+          duration: 26 * 60,
+          qCount: 20,
+          type: "verbal-speed",
+          allowCalc: false,
+        },
+        Recall: {
+          label: "Verbal (Passage Recall)",
+          duration: 120,
+          qCount: 4,
+          type: "recall",
+          allowCalc: false,
+        },
+        Email: {
+          label: "Business Communication",
+          duration: 9 * 60,
+          qCount: 1,
+          type: "essay",
+          allowCalc: false,
+        },
+        Coding: {
+          label: "Advanced Coding (Easy)",
+          duration: 35 * 60,
+          qCount: 1,
+          type: "compiler",
+          allowCalc: true,
+        },
+        CodingMed: {
+          label: "Advanced Coding (Medium)",
+          duration: 55 * 60,
+          qCount: 1,
+          type: "compiler",
+          allowCalc: true,
+        },
+      };
+
+      const questionsDatabase = {
+        Numerical: [
+          {
+            text: "What is the sum of all the factors of 256?",
+            options: ["A) 255", "B) 256", "C) 511", "D) 512"],
+            isFib: false,
+          },
+          {
+            text: "A train running at the speed of 60 km/hr crosses a pole in 9 seconds. What is the length of the train in meters?",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "The HCF of two numbers is 11 and their LCM is 7700. If one of the numbers is 275, find the other.",
+            options: ["A) 279", "B) 283", "C) 308", "D) 318"],
+            isFib: false,
+          },
+          {
+            text: "A shopkeeper sells an article at a loss of 8%. Had he sold it for Rs. 120 more, he would have gained 8%. Find the cost price of the article.",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "If the sum of the roots of a quadratic equation is 5 and the product of the roots is 6, what is the equation?",
+            options: [
+              "A) x^2 + 5x + 6 = 0",
+              "B) x^2 - 5x + 6 = 0",
+              "C) x^2 - 6x + 5 = 0",
+              "D) x^2 + 6x + 5 = 0",
+            ],
+            isFib: false,
+          },
+          {
+            text: "A can do a piece of work in 10 days and B can do it in 15 days. How long will they take if both work together?",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "The average of 5 consecutive odd numbers is 25. What is the smallest number?",
+            options: ["A) 19", "B) 21", "C) 23", "D) 25"],
+            isFib: false,
+          },
+          {
+            text: "What is the probability of getting a sum of 9 from two throws of a standard dice?",
+            options: ["A) 1/6", "B) 1/9", "C) 1/12", "D) 1/18"],
+            isFib: false,
+          },
+          {
+            text: "A sum of money doubles itself in 5 years at simple interest. In how many years will it become 4 times itself?",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "The ratio of the ages of A and B is 3:4. After 5 years, the ratio becomes 4:5. What is the present age of A?",
+            options: ["A) 10", "B) 12", "C) 15", "D) 20"],
+            isFib: false,
+          },
+          {
+            text: "Find the unit digit of 7^105.",
+            options: ["A) 1", "B) 3", "C) 7", "D) 9"],
+            isFib: false,
+          },
+          {
+            text: "A boat goes 15 km upstream and 22 km downstream in 5 hours. It goes 20 km upstream and 55 km downstream in 13 hours. Find the speed of the stream.",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "If 20% of a = b, then b% of 20 is the same as what percentage of a?",
+            options: ["A) 2%", "B) 4%", "C) 5%", "D) 8%"],
+            isFib: false,
+          },
+          {
+            text: "The perimeter of a rectangle is 40 cm and its area is 96 sq cm. What is the length of its diagonal?",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "Two pipes A and B can fill a tank in 20 and 30 minutes respectively. If both pipes are opened together, how much time will it take to fill the tank?",
+            options: ["A) 10 mins", "B) 12 mins", "C) 15 mins", "D) 18 mins"],
+            isFib: false,
+          },
+          {
+            text: "A mixture contains milk and water in the ratio 5:3. If 4 liters of water is added to the mixture, the ratio becomes 3:2. Find the quantity of milk in the mixture.",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "What is the least number which when divided by 5, 6, 7, and 8 leaves a remainder 3, but when divided by 9 leaves no remainder?",
+            options: ["A) 843", "B) 1683", "C) 2523", "D) 3363"],
+            isFib: false,
+          },
+          {
+            text: "The difference between compound interest and simple interest on a certain sum for 2 years at 10% per annum is Rs. 50. Find the sum.",
+            options: [
+              "A) Rs. 4000",
+              "B) Rs. 4500",
+              "C) Rs. 5000",
+              "D) Rs. 5500",
+            ],
+            isFib: false,
+          },
+          {
+            text: "A man walks at 5 km/hr and misses a train by 5 minutes. If he walks at 6 km/hr, he reaches the station 5 minutes early. Find the distance to the station.",
+            options: [],
+            isFib: true,
+          },
+          {
+            text: "Simplify: (0.1 * 0.1 * 0.1 + 0.02 * 0.02 * 0.02) / (0.2 * 0.2 * 0.2 + 0.04 * 0.04 * 0.04).",
+            options: ["A) 0.0125", "B) 0.125", "C) 0.25", "D) 0.5"],
+            isFib: false,
+          },
+        ],
+        Reasoning: [
+          {
+            text: "If 'APPLE' is coded as 'EQTPI', how is 'MANGO' coded?",
+            options: ["A) QERKS", "B) QEPKS", "C) QERJS", "D) QDPKS"],
+          },
+          {
+            text: "Pointing to a photograph, a man said, \"I have no brother or sister but that man's father is my father's son.\" Whose photograph was it?",
+            options: [
+              "A) His son",
+              "B) Himself",
+              "C) His father",
+              "D) His nephew",
+            ],
+          },
+          {
+            text: "Find the missing number in the series: 2, 6, 12, 20, 30, ?",
+            options: ["A) 40", "B) 42", "C) 44", "D) 48"],
+          },
+          {
+            text: "Six friends A, B, C, D, E, and F are sitting in a circle facing the center. A is second to the left of C. B is between D and E. F is not next to A. Who is sitting to the immediate right of C?",
+            options: ["A) A", "B) B", "C) D", "D) E"],
+          },
+          {
+            text: "Statements: All cats are dogs. Some dogs are rats. Conclusion I: Some cats are rats. Conclusion II: Some rats are dogs. Which conclusion logically follows?",
+            options: [
+              "A) Only I follows",
+              "B) Only II follows",
+              "C) Both I and II follow",
+              "D) Neither I nor II follows",
+            ],
+          },
+          {
+            text: "If A + B means A is the brother of B; A - B means A is the sister of B; A * B means A is the father of B. Which of the following means C is the son of M?",
+            options: [
+              "A) M * C + N",
+              "B) M + C - N",
+              "C) M * C - N",
+              "D) M - C + N",
+            ],
+          },
+          {
+            text: "Choose the odd one out: 16, 25, 36, 72, 144.",
+            options: ["A) 25", "B) 36", "C) 72", "D) 144"],
+          },
+          {
+            text: "A man walks 5 km towards South and then turns to the right. After walking 3 km he turns to the left and walks 5 km. In which direction is he from the starting place?",
+            options: ["A) South", "B) South-West", "C) South-East", "D) West"],
+          },
+          {
+            text: "In a certain code language, '123' means 'hot filtered coffee', '356' means 'very hot day' and '589' means 'day and night'. Which digit stands for 'very'?",
+            options: ["A) 3", "B) 5", "C) 6", "D) 8"],
+          },
+          {
+            text: "Find the next term in the series: B2D, E3H, I4M, ?",
+            options: ["A) N5S", "B) N5T", "C) M5S", "D) O5T"],
+          },
+          {
+            text: "If the 3rd of a month is Tuesday, what day will be the 25th of that month?",
+            options: ["A) Monday", "B) Tuesday", "C) Wednesday", "D) Thursday"],
+          },
+          {
+            text: "Arrange the given words in a meaningful sequence: 1. Police 2. Punishment 3. Crime 4. Judge 5. Judgment.",
+            options: [
+              "A) 3, 1, 4, 5, 2",
+              "B) 1, 3, 4, 5, 2",
+              "C) 3, 1, 2, 4, 5",
+              "D) 3, 4, 1, 5, 2",
+            ],
+          },
+          {
+            text: "How many triangles are there in a pentagon with all its diagonals drawn?",
+            options: ["A) 25", "B) 30", "C) 35", "D) 40"],
+          },
+          {
+            text: "Statements: No tree is a flower. Some flowers are fruits. Conclusion I: No fruit is a tree. Conclusion II: Some fruits are flowers. Which conclusion follows?",
+            options: [
+              "A) Only I follows",
+              "B) Only II follows",
+              "C) Both I and II follow",
+              "D) Neither I nor II follows",
+            ],
+          },
+          {
+            text: "A clock is set right at 8 AM. The clock gains 10 minutes in 24 hours. What will be the true time when the clock indicates 1 PM on the following day?",
+            options: ["A) 12:48 PM", "B) 12:50 PM", "C) 1:10 PM", "D) 1:12 PM"],
+          },
+          {
+            text: "Find the missing letter: A, C, F, J, O, ?",
+            options: ["A) S", "B) T", "C) U", "D) V"],
+          },
+          {
+            text: "In a row of 40 students, Rahul is 15th from the left end. What is his position from the right end?",
+            options: ["A) 24th", "B) 25th", "C) 26th", "D) 27th"],
+          },
+          {
+            text: "If 'x' means '-', '-' means 'x', '+' means '/' and '/' means '+', then what is the value of 15 - 2 / 900 + 90 x 100?",
+            options: ["A) 8900", "B) 8985", "C) 9000", "D) 9015"],
+          },
+          {
+            text: "Choose the word which is least like the other words in the group: Zebra, Lion, Tiger, Horse, Giraffe.",
+            options: ["A) Zebra", "B) Lion", "C) Tiger", "D) Horse"],
+          },
+          {
+            text: "A dice is numbered from 1 to 6 in different ways. If 1 is opposite to 5 and 2 is opposite to 3, then what will be opposite to 4?",
+            options: ["A) 1", "B) 2", "C) 5", "D) 6"],
+          },
+        ],
+        Advanced: [
+          {
+            text: "A solid metallic sphere of radius 8 cm is melted and recast into smaller spheres of radius 2 cm each. How many such spheres can be formed?",
+            options: ["A) 16", "B) 32", "C) 64", "D) 128"],
+          },
+          {
+            text: "In a triangle ABC, the angle bisector of A meets BC at D. If AB = 10 cm, AC = 15 cm, and BC = 12 cm, find the length of BD.",
+            options: ["A) 4 cm", "B) 4.8 cm", "C) 5.2 cm", "D) 6 cm"],
+          },
+          {
+            text: "A bag contains 5 red, 4 blue, and 3 green balls. If 3 balls are drawn at random, what is the probability that all 3 are of different colors?",
+            options: ["A) 3/11", "B) 4/11", "C) 5/11", "D) 6/11"],
+          },
+          {
+            text: "Find the number of trailing zeros in 100! (100 factorial).",
+            options: ["A) 20", "B) 21", "C) 24", "D) 25"],
+          },
+          {
+            text: "A function f(x) is defined as f(x) = x^2 - 4x + 3. Find the minimum value of the function.",
+            options: ["A) -1", "B) 0", "C) 1", "D) 3"],
+          },
+          {
+            text: "In a group of 100 people, 60 like tea, 50 like coffee, and 20 like neither. How many people like both tea and coffee?",
+            options: ["A) 20", "B) 30", "C) 40", "D) 50"],
+          },
+          {
+            text: "A train overtakes two persons who are walking in the same direction in which the train is going, at the rate of 2 kmph and 4 kmph and passes them completely in 9 and 10 seconds respectively. Find the length of the train.",
+            options: ["A) 40 m", "B) 50 m", "C) 60 m", "D) 70 m"],
+          },
+          {
+            text: "The sum of an infinite geometric progression is 15 and the sum of the squares of its terms is 45. Find the first term and the common ratio.",
+            options: [
+              "A) a=5, r=2/3",
+              "B) a=10, r=1/3",
+              "C) a=5, r=1/3",
+              "D) a=10, r=2/3",
+            ],
+          },
+          {
+            text: "If log2(x) + log4(x) + log16(x) = 21/4, find the value of x.",
+            options: ["A) 2", "B) 4", "C) 8", "D) 16"],
+          },
+          {
+            text: "A cryptarithmetic puzzle: SEND + MORE = MONEY. What is the value of the letter 'O'?",
+            options: ["A) 0", "B) 1", "C) 2", "D) 3"],
+          },
+          {
+            text: "Find the remainder when 3^256 is divided by 17.",
+            options: ["A) 1", "B) 3", "C) 9", "D) 15"],
+          },
+          {
+            text: "Two trains of equal length are running on parallel lines in the same direction at 46 km/hr and 36 km/hr. The faster train passes the slower train in 36 seconds. The length of each train is?",
+            options: ["A) 40 m", "B) 50 m", "C) 60 m", "D) 70 m"],
+          },
+          {
+            text: "A hollow cylindrical tube 20 cm long is made of iron and its external and internal diameters are 8 cm and 6 cm respectively. Find the volume of iron used in making the tube.",
+            options: ["A) 440 cm³", "B) 880 cm³", "C) 1320 cm³", "D) 1760 cm³"],
+          },
+          {
+            text: "In how many ways can the letters of the word 'CORPORATION' be arranged so that the vowels always come together?",
+            options: ["A) 50400", "B) 100800", "C) 151200", "D) 201600"],
+          },
+        ],
+        Verbal: [
+          {
+            text: "Despite the heavy rain, the football match continued ________.",
+            options: [],
+          },
+          {
+            text: "The manager was so impressed with her presentation that he ________ her on the spot.",
+            options: [],
+          },
+          {
+            text: "If I had known you were coming, I ________ baked a cake.",
+            options: [],
+          },
+          {
+            text: "The new software update is designed to ________ the overall performance of the system.",
+            options: [],
+          },
+          {
+            text: "She is not only a talented musician ________ an exceptional painter.",
+            options: [],
+          },
+          {
+            text: "The company decided to ________ its operations in the Asian market due to high demand.",
+            options: [],
+          },
+          {
+            text: "He was accused of ________ the confidential documents to the rival firm.",
+            options: [],
+          },
+          {
+            text: "The doctor advised him to ________ from smoking to improve his health.",
+            options: [],
+          },
+          {
+            text: "By the time we reached the station, the train ________.",
+            options: [],
+          },
+          {
+            text: "The committee will ________ the proposal before making a final decision.",
+            options: [],
+          },
+          {
+            text: "Her sudden resignation took everyone by ________.",
+            options: [],
+          },
+          {
+            text: "The government has implemented new policies to ________ the effects of climate change.",
+            options: [],
+          },
+          {
+            text: "He is considered one of the most ________ scientists in the field of quantum physics.",
+            options: [],
+          },
+          {
+            text: "The children were thrilled to see the ________ of colorful balloons in the sky.",
+            options: [],
+          },
+          {
+            text: "Due to unforeseen circumstances, the event has been ________ until next month.",
+            options: [],
+          },
+          {
+            text: "The detective carefully examined the crime scene to ________ any hidden clues.",
+            options: [],
+          },
+          {
+            text: "She has a strong ________ for learning new languages.",
+            options: [],
+          },
+          {
+            text: "The CEO's speech was highly ________ and motivated the entire team.",
+            options: [],
+          },
+          {
+            text: "It is essential to ________ a healthy work-life balance to avoid burnout.",
+            options: [],
+          },
+          {
+            text: "The novel's intricate plot kept the readers ________ until the very last page.",
+            options: [],
+          },
+        ],
+        Recall: [
+          {
+            text: "The Global Infrastructure Monitoring System was deployed across 14 regional centers to improve operational efficiency. Initial reports indicated a 27 percent reduction in maintenance costs within the first quarter. Engineers continue to monitor system performance for additional improvements.",
+            prompt: "Rewrite the paragraph in your own words.",
+          },
+          {
+            text: "The BioSecure Research Initiative established specialized laboratories in remote agricultural zones. Scientists discovered that early disease detection reduced crop losses significantly and improved overall farm productivity.",
+            prompt: "Rewrite the paragraph in your own words.",
+          },
+          {
+            text: "The Enterprise Cloud Migration Project successfully transferred legacy applications to a distributed architecture. This transition enhanced scalability, reduced downtime, and strengthened cybersecurity measures.",
+            prompt: "Rewrite the paragraph in your own words.",
+          },
+          {
+            text: "Historian Devendra Swaminathan discovered hidden manuscripts while cataloging documents in an ancient archive. Careful examination revealed valuable information about previously unknown trade routes.",
+            prompt: "Rewrite the paragraph in your own words.",
+          },
+        ],
+        Email: [
+          {
+            text: "Scenario: You are the project manager of a software development team. The delivery of a critical project module, which was scheduled for this Friday, will be delayed by one week due to unexpected technical challenges and the sudden medical leave of a key developer. Write an email to the client, Mr. Smith, informing him about the delay. Apologize for the inconvenience, briefly explain the reasons without being overly technical, and assure him that the team is working overtime to meet the revised deadline. Maintain a professional and reassuring tone.",
+          },
+        ],
+        Coding: [
+          {
+            text: "Write a program to rotate an array of N integers to the right by K steps. For example, given the array [1, 2, 3, 4, 5, 6, 7] and K = 3, the modified array should be [5, 6, 7, 1, 2, 3, 4].",
+            placeholder:
+              "// Dynamic JS Execution Engine\nfunction rotate_array(arr, k) {\n    k = k % arr.length;\n    return arr.slice(-k).concat(arr.slice(0, -k));\n}\nconsole.log(rotate_array([1, 2, 3, 4, 5, 6, 7], 3));\n",
+          },
+        ],
+        CodingMed: [
+          {
+            text: 'Write a program to find the longest substring without repeating characters in a given string. For example, given the string "abcabcbb", the longest substring without repeating characters is "abc", which has a length of 3.',
+            placeholder:
+              'function longest_unique_substring(s) {\n    let seen = new Set(), maxLen = 0, left = 0;\n    for (let right = 0; right < s.length; right++) {\n        while (seen.has(s[right])) { seen.delete(s[left]); left++; }\n        seen.add(s[right]);\n        maxLen = Math.max(maxLen, right - left + 1);\n    }\n    return maxLen;\n}\nconsole.log(longest_unique_substring("abcabcbb"));\n',
+          },
+        ],
+      };
+
+      let orderOfSections = [
+        "Numerical",
+        "Reasoning",
+        "Advanced",
+        "Verbal",
+        "Recall",
+        "Email",
+        "Coding",
+        "CodingMed",
+      ];
+      let activeSectionIndex = 0;
+      let activeQIndex = 0;
+
+      let currentSection = orderOfSections[activeSectionIndex];
+      let countdownTimeLeft = examConfig[currentSection].duration;
+
+      // SOLVED: Dedicated granular tracking state for Verbal speed loops
+      let verbalItemTimer = 25;
+      let isRecallWritingPhase = false;
+      let isEmailPromptPhase = true;
+      let emailPromptTimer = 30;
+      let recallReadingTime = 30;
+      let recallWritingTime = 90;
+
+      let isRecallReadingPhase = true;
+      let isExamPaused = false;
+      let isModalActive = false;
+
+      let clockInterval;
+      let userSessionLog = {};
+
+      function showCustomModal(title, text, confirmAction = null) {
+        isModalActive = true;
+        document.getElementById("modalTitle").innerText = title;
+        document.getElementById("modalText").innerText = text;
+
+        let frame = document.getElementById("modalBtnFrame");
+        if (confirmAction) {
+          frame.innerHTML = `<button class="btn-action" style="background:#6C757D;" onclick="closeCustomModal()">Cancel</button>
+                               <button class="btn-action" style="background:var(--tcs-success);" onclick="${confirmAction}()">YES, Confirm</button>`;
+        } else {
+          frame.innerHTML = `<button class="btn-action" onclick="closeCustomModal()">Acknowledge</button>`;
+        }
+        document.getElementById("customModal").style.display = "flex";
+      }
+
+      function closeCustomModal() {
+        document.getElementById("customModal").style.display = "none";
+        isModalActive = false;
+      }
+
+      function initSystem() {
+        renderTabs();
+        buildPalette();
+        loadQuestion();
+        makeElementDraggable(document.getElementById("tcsCalcElement"));
+      }
+
+      /* Code Runtime Actions */
+      function runLocalPython() {
+        let codeStr = document.getElementById("codeArea").value;
+        let terminal = document.getElementById("terminalScreen");
+
+        let logBuffer = [];
+        let oldLog = console.log;
+        console.log = function (...args) {
+          logBuffer.push(args.join(" "));
+        };
+
+        try {
+          let scriptFunc = new Function(codeStr);
+          scriptFunc();
+          console.log = oldLog;
+          terminal.innerText =
+            logBuffer.length > 0
+              ? logBuffer.join("\n")
+              : ">>> Program executed cleanly. No console parameters printed.";
+          terminal.style.color = "#73DACA";
+        } catch (err) {
+          console.log = oldLog;
+          terminal.innerText = `>>> Runtime Error: ${err.message}`;
+          terminal.style.color = "#F7768E";
+        }
+      }
+
+      function submitPythonFinal() {
+        let key = `${currentSection}-Q${activeQIndex + 1}`;
+        let currentCode = document.getElementById("codeArea")
+          ? document.getElementById("codeArea").value
+          : "";
+        userSessionLog[key] = {
+          question: questionsDatabase[currentSection][activeQIndex].text,
+          typed: currentCode,
+        };
+        localStorage.setItem("tcsResponses", JSON.stringify(userSessionLog));
+        showCustomModal(
+          "Code Draft Saved",
+          "Your workspace logic scripts have been successfully cached.",
+        );
+        buildPalette();
+      }
+
+      function initiateSectionSubmit() {
+        showCustomModal(
+          "Final Section Submission",
+          "Are you sure you want to lock and submit this section? You will not be able to return to edit these responses.",
+          "forceSectionSwitch",
+        );
+      }
+
+      /* Calculator Actions */
+      let calcExpression = "";
+      function toggleCalculator() {
+        let calc = document.getElementById("tcsCalcElement");
+        if (!examConfig[currentSection].allowCalc) {
+          showCustomModal(
+            "Calculator Action Exception",
+            "Calculation utilities are disabled during communication sections.",
+          );
+          calc.style.display = "none";
+          return;
+        }
+        calc.style.display = calc.style.display === "block" ? "none" : "block";
+      }
+      function inputCalcNum(num) {
+        let display = document.getElementById("calcDisplay");
+        if (display.value === "0" && num !== ".") display.value = "";
+        display.value += num;
+        calcExpression += num;
+      }
+      function inputCalcOp(op) {
+        let display = document.getElementById("calcDisplay");
+        display.value += " " + op + " ";
+        calcExpression += op;
+      }
+      function clearCalc() {
+        document.getElementById("calcDisplay").value = "0";
+        calcExpression = "";
+      }
+      function backspaceCalc() {
+        let display = document.getElementById("calcDisplay");
+        if (display.value.length > 0 && display.value !== "0") {
+          display.value = display.value.slice(0, -1);
+          calcExpression = calcExpression.slice(0, -1);
+          if (display.value === "") display.value = "0";
+        }
+      }
+      function sqrtCalc() {
+        let display = document.getElementById("calcDisplay");
+        try {
+          let val = eval(calcExpression || display.value);
+          let res = Math.sqrt(val);
+          display.value = res;
+          calcExpression = res.toString();
+        } catch (e) {
+          display.value = "Error";
+          calcExpression = "";
+        }
+      }
+      function evaluateCalc() {
+        let display = document.getElementById("calcDisplay");
+        try {
+          display.value = eval(calcExpression);
+          calcExpression = display.value.toString();
+        } catch (e) {
+          display.value = "Error";
+          calcExpression = "";
+        }
+      }
+      function makeElementDraggable(elmnt) {
+        let header = document.getElementById("tcsCalcHeader");
+        if (header) header.onmousedown = dragMouseDown;
+        function dragMouseDown(e) {
+          e = e || window.event;
+          e.preventDefault();
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+          document.onmouseup = closeDragElement;
+          document.onmousemove = elementDrag;
+        }
+        function elementDrag(e) {
+          e = e || window.event;
+          e.preventDefault();
+          let pos1 = pos3 - e.clientX;
+          let pos2 = pos4 - e.clientY;
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+          elmnt.style.top = elmnt.offsetTop - pos2 + "px";
+          elmnt.style.left = elmnt.offsetLeft - pos1 + "px";
+        }
+        function closeDragElement() {
+          document.onmouseup = null;
+          document.onmousemove = null;
+        }
+      }
+
+      /* Navigation Controllers */
+      function renderTabs() {
+        orderOfSections.forEach((sec) => {
+          let tab = document.getElementById(`tab-${sec}`);
+          if (tab) {
+            tab.className = "section-tab";
+            if (sec === currentSection) tab.classList.add("active");
+          }
+        });
+        let trigger = document.getElementById("calcTrigger");
+        if (trigger)
+          trigger.style.opacity = !examConfig[currentSection].allowCalc
+            ? "0.3"
+            : "1";
+      }
+
+      function buildPalette() {
+        let box = document.getElementById("paletteBox");
+        let label = document.getElementById("paletteLabel");
+        box.innerHTML = "";
+        let config = examConfig[currentSection];
+
+        if (
+          config.type === "verbal-speed" ||
+          config.type === "recall" ||
+          config.type === "essay"
+        ) {
+          label.style.display = "none";
+          box.style.display = "none";
+          return;
+        }
+        label.style.display = "block";
+        box.style.display = "grid";
+
+        for (let i = 0; i < config.qCount; i++) {
+          let btn = document.createElement("button");
+          btn.className = "palette-btn";
+          btn.innerText = i + 1;
+          btn.onclick = () => jumpToQuestion(i);
+          let stateKey = `${currentSection}-Q${i + 1}`;
+          if (userSessionLog[stateKey] !== undefined)
+            btn.classList.add("answered");
+          if (i === activeQIndex) btn.classList.add("active");
+          box.appendChild(btn);
+        }
+      }
+      function jumpToQuestion(index) {
+        // Allow jumping only in objective sections
+        let config = examConfig[currentSection];
+
+        if (
+          config.type === "objective" ||
+          config.type === "mixed-math" ||
+          config.type === "compiler"
+        ) {
+          activeQIndex = index;
+
+          loadQuestion();
+          buildPalette();
+        }
+      }
+      function logObjectiveAnswer(opt) {
+        let key = `${currentSection}-Q${activeQIndex + 1}`;
+
+        userSessionLog[key] = {
+          question: questionsDatabase[currentSection][activeQIndex].text,
+          selected: opt,
+        };
+
+        localStorage.setItem("tcsResponses", JSON.stringify(userSessionLog));
+
+        buildPalette();
+
+        console.log(userSessionLog); // Debug
+      }
+      function updateWordCount(text) {
+        let counter = document.getElementById("wordCountLabel");
+
+        if (!counter) return;
+
+        let count = 0;
+
+        if (text.trim() !== "") {
+          count = text.trim().split(/\s+/).length;
+        }
+
+        counter.innerText = count;
+      }
+      function logTextAnswer(val) {
+        let key = `${currentSection}-Q${activeQIndex + 1}`;
+
+        userSessionLog[key] = {
+          question: questionsDatabase[currentSection][activeQIndex].text,
+          typed: val,
+        };
+
+        localStorage.setItem("tcsResponses", JSON.stringify(userSessionLog));
+
+        console.log(userSessionLog);
+      }
+      function resumeExamSession() {
+        document.getElementById("warningScreen").style.display = "none";
+
+        isExamPaused = false;
+
+        clearInterval(clockInterval);
+        startTimerLoop();
+
+        let txt =
+          document.querySelector("textarea") ||
+          document.querySelector("input[type='text']");
+
+        if (txt) txt.focus();
+      }
+      function loadQuestion() {
+        let area = document.getElementById("dynamicContentArea");
+        let qData = questionsDatabase[currentSection][activeQIndex];
+        let config = examConfig[currentSection];
+        let stateKey = `${currentSection}-Q${activeQIndex + 1}`;
+
+        document.getElementById("questionHeading").innerText =
+          `${config.label} - Item ${activeQIndex + 1}`;
+        document.getElementById("btnPrev").style.visibility =
+          config.type === "objective" ||
+          config.type === "mixed-math" ||
+          config.type === "compiler"
+            ? "visible"
+            : "hidden";
+        document.getElementById("btnNext").innerText = "Save & Next";
+
+        if (config.type === "objective" || config.type === "mixed-math") {
+          document.getElementById("masterClock").style.display = "block";
+          document.getElementById("verbalAlert").style.display = "none";
+          document.getElementById("recallAlert").style.display = "none";
+          document.getElementById("emailPromptAlert").style.display = "none";
+
+          if (qData.isFib) {
+            let existingVal = userSessionLog[stateKey]?.typed || "";
+            area.innerHTML = `<p style="font-size: 18px; line-height: 1.6; min-height: 100px; font-weight: 500;">${qData.text}</p>
+                                  <input type="text" class="text-blank-input" id="mathFibInput" value="${existingVal}" oninput="logTextAnswer(this.value)" placeholder="Type solution value...">`;
+          } else {
+            area.innerHTML = `<p style="font-size: 18px; line-height: 1.6; min-height: 100px; font-weight: 500;">${qData.text}</p><div id="optionsFrame" style="margin-top: 25px;"></div>`;
+            let frame = document.getElementById("optionsFrame");
+            qData.options.forEach((opt) => {
+              let checkedStr =
+                userSessionLog[stateKey]?.selected === opt ? "checked" : "";
+              frame.innerHTML += `<p><label style="font-size:16px; cursor:pointer; display:block; padding:10px; background:#F8F9FA; border-radius:4px;"><input type="radio" name="optionGroup" value="${opt}" ${checkedStr} onchange="logObjectiveAnswer('${opt}')"> ${opt}</label></p>`;
+            });
+          }
+          if (activeQIndex === config.qCount - 1)
+            document.getElementById("btnNext").innerText = "SUBMIT SECTION";
+        } else if (config.type === "verbal-speed") {
+          document.getElementById("masterClock").style.display = "block"; // Keep sectional active clock visible
+          document.getElementById("verbalAlert").style.display = "block";
+          document.getElementById("recallAlert").style.display = "none";
+          document.getElementById("emailPromptAlert").style.display = "none";
+
+          let existingVal = userSessionLog[stateKey]?.typed || "";
+          area.innerHTML = `
+                <p style="font-size: 18px; line-height: 1.6; font-weight: 500;">${qData.text}</p>
+                <input type="text" class="text-blank-input" id="blankField" value="${existingVal}" oninput="logTextAnswer(this.value)" placeholder="Type context completion answer..." autocomplete="off">`;
+          document.getElementById("blankField").focus();
+        } else if (config.type === "recall") {
+          document.getElementById("masterClock").style.display =
+            isRecallWritingPhase ? "block" : "none";
+          document.getElementById("verbalAlert").style.display = "none";
+          document.getElementById("recallAlert").style.display =
+            isRecallWritingPhase ? "none" : "block";
+          document.getElementById("emailPromptAlert").style.display = "none";
+
+          if (!isRecallWritingPhase) {
+            area.innerHTML = `<p style="font-size: 18px; line-height: 1.6; padding:15px; background:#FFF3CD; border-left:5px solid #FFC107;">${qData.text}</p>`;
+            document.getElementById("btnNext").style.display = "none";
+          } else {
+            let existingVal = userSessionLog[stateKey]?.typed || "";
+            area.innerHTML = `
+                    <p style="font-weight:bold; color:#721C24;">${qData.prompt}</p>
+                    <textarea class="essay-input" id="recallTextArea" oninput="logTextAnswer(this.value)" placeholder="Rewrite the sentence here...">${existingVal}</textarea>`;
+            document.getElementById("recallTextArea").focus();
+            document.getElementById("btnNext").style.display = "block";
+          }
+        } else if (config.type === "essay") {
+          document.getElementById("masterClock").style.display = "block";
+          document.getElementById("verbalAlert").style.display = "none";
+          document.getElementById("recallAlert").style.display = "none";
+          document.getElementById("emailPromptAlert").style.display =
+            isEmailPromptPhase ? "block" : "none";
+
+          let existingVal = userSessionLog[stateKey]?.typed || "";
+          if (isEmailPromptPhase) {
+            area.innerHTML = `<p style="font-size: 16px; color:#555; font-style:italic; line-height:1.6; padding:15px; background:#FFF3CD; border:1px solid #FFEBAA; border-radius:4px;">${qData.text}</p>`;
+            document.getElementById("btnNext").style.display = "none";
+          } else {
+            area.innerHTML = `
+                    <p style="font-weight:bold; color:var(--tcs-blue);">TCS Business Communication Email Workspace:</p>
+                    <textarea class="essay-input" id="emailArea" oninput="logTextAnswer(this.value); updateWordCount(this.value)" placeholder="Subject:\n\nDear Sir/Madam,...">${existingVal}</textarea>
+                    <div class="word-counter">Word Count: <span id="wordCountLabel">0</span> words</div>`;
+            document.getElementById("emailArea").focus();
+            updateWordCount(existingVal);
+            document.getElementById("btnNext").innerText = "SUBMIT SECTION";
+            document.getElementById("btnNext").style.display = "block";
+          }
+        } else if (config.type === "compiler") {
+          document.getElementById("masterClock").style.display = "block";
+          document.getElementById("verbalAlert").style.display = "none";
+          document.getElementById("recallAlert").style.display = "none";
+          document.getElementById("emailPromptAlert").style.display = "none";
+
+          let existingVal =
+            userSessionLog[stateKey]?.typed || qData.placeholder;
+          area.innerHTML = `
+                <p style="font-size:16px; font-weight:500; margin-bottom:12px;">${qData.text}</p>
+                <textarea class="code-input" id="codeArea" oninput="logTextAnswer(this.value)">${existingVal}</textarea>
+                <div class="compiler-toolbar">
+                    <select class="lang-select">
+                        <option>JavaScript Interpreter (Python Syntax Layout)</option>
+                    </select>
+                    <div>
+                        <button class="btn-comp" onclick="runLocalPython()">Run Script</button>
+                        <button class="btn-comp" style="background:var(--tcs-success); color:white;" onclick="submitPythonFinal()">SUBMIT ANSWER</button>
+                    </div>
+                </div>
+                <div class="terminal-display" id="terminalScreen">>>> Compiler active. Click 'Run Script' to verify your programmatic logic calculations.</div>`;
+          document.getElementById("codeArea").focus();
+          document.getElementById("btnNext").innerText =
+            currentSection === "CodingMed"
+              ? "SUBMIT ASSESSMENT"
+              : "Next Coding Item";
+        }
+      }
+
+      function saveAndNext() {
+        let config = examConfig[currentSection];
+
+        if (config.type === "objective" || config.type === "mixed-math") {
+          if (activeQIndex < config.qCount - 1) {
+            activeQIndex++;
+            loadQuestion();
+            buildPalette();
+          } else {
+            initiateSectionSubmit();
+          }
+        } else if (currentSection === "Verbal") {
+          if (activeQIndex < config.qCount - 1) {
+            activeQIndex++;
+            verbalItemTimer = 25; // Reset standalone speed clock
+            loadQuestion();
+          } else {
+            initiateSectionSubmit();
+          }
+        } else if (currentSection === "Recall") {
+          if (isRecallWritingPhase) {
+            if (activeQIndex < config.qCount - 1) {
+              activeQIndex++;
+
+              isRecallWritingPhase = false;
+
+              recallReadingTime = 30;
+              recallWritingTime = 90;
+
+              document.getElementById("masterClock").style.display = "none";
+
+              loadQuestion();
+            } else {
+              initiateSectionSubmit();
+            }
+          }
+        } else if (
+          currentSection === "Email" ||
+          currentSection === "Coding" ||
+          currentSection === "CodingMed"
+        ) {
+          initiateSectionSubmit();
+        }
+      }
+
+      function startTimerLoop() {
+        if (isExamPaused) return;
+        clockInterval = setInterval(() => {
+          if (isExamPaused) return;
+          countdownTimeLeft--;
+
+          // SOLVED: Clean structural separation of master time left and granular auto-advance intervals
+          let m = Math.floor(countdownTimeLeft / 60);
+          let s = countdownTimeLeft % 60;
+          document.getElementById("masterClock").innerText =
+            `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+
+          if (currentSection === "Verbal") {
+            verbalItemTimer--;
+            document.getElementById("verbalClock").innerText = verbalItemTimer;
+            if (verbalItemTimer <= 0) {
+              verbalItemTimer = 25;
+
+              saveAndNext();
+            }
+            if (countdownTimeLeft <= 0) {
+              clearInterval(clockInterval);
+              forceSectionSwitch();
+            }
+          } else if (currentSection === "Recall") {
+            // Reading Phase (30 sec)
+            if (!isRecallWritingPhase) {
+              recallReadingTime--;
+
+              document.getElementById("recallClock").innerText =
+                recallReadingTime;
+
+              if (recallReadingTime <= 0) {
+                isRecallWritingPhase = true;
+
+                recallWritingTime = 90;
+
+                loadQuestion();
+              }
+            }
+
+            // Writing Phase (90 sec)
+            else {
+              recallWritingTime--;
+
+              let m = Math.floor(recallWritingTime / 60);
+              let s = recallWritingTime % 60;
+
+              document.getElementById("masterClock").innerText =
+                `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+
+              if (recallWritingTime <= 0) {
+                saveAndNext();
+              }
+            }
+          } else if (currentSection === "Email") {
+            if (isEmailPromptPhase) {
+              emailPromptTimer--;
+              document.getElementById("emailPromptClock").innerText =
+                emailPromptTimer;
+              if (emailPromptTimer <= 0) {
+                isEmailPromptPhase = false;
+                document.getElementById("emailPromptAlert").style.display =
+                  "none";
+                loadQuestion();
+              }
+            }
+            if (countdownTimeLeft <= 0) {
+              clearInterval(clockInterval);
+              forceSectionSwitch();
+            }
+          } else {
+            if (countdownTimeLeft <= 0) {
+              clearInterval(clockInterval);
+              forceSectionSwitch();
+            }
+          }
+        }, 1000);
+      }
+
+      function forceSectionSwitch() {
+        closeCustomModal();
+        clearInterval(clockInterval);
+        activeSectionIndex++;
+
+        if (activeSectionIndex < orderOfSections.length) {
+          currentSection = orderOfSections[activeSectionIndex];
+          activeQIndex = 0;
+          isRecallWritingPhase = false;
+          recallReadingTime = 30;
+          recallWritingTime = 90;
+          isEmailPromptPhase = true;
+          emailPromptTimer = 30;
+          verbalItemTimer = 25;
+          countdownTimeLeft = examConfig[currentSection].duration;
+
+          renderTabs();
+          buildPalette();
+          loadQuestion();
+          startTimerLoop();
+        } else {
+          renderEndExamLayout();
+        }
+      }
+      function updateEmailWordCount() {
+        let txt = document.getElementById("emailInput");
+
+        if (!txt) return;
+
+        let words = txt.value.trim();
+
+        let count = words === "" ? 0 : words.split(/\s+/).length;
+
+        document.getElementById("emailWordCount").innerText = count;
+      }
+      function renderEndExamLayout() {
+        clearInterval(clockInterval);
+        document.getElementById("tabsBar").style.display = "none";
+        document.getElementById("tcsCalcElement").style.display = "none";
+        document.getElementById("calcTrigger").style.display = "none";
+        document.querySelector(".right-panel").style.display = "none";
+
+        localStorage.removeItem("tcsResponses");
+
+        let mainPanel = document.getElementById("dynamicContentArea");
+        document.getElementById("questionHeading").innerText =
+          "Assessment Complete - Candidate Response Sheet";
+
+        let htmlBuffer = `
+            <div class="feedback-container">
+                <h2 style="color:var(--tcs-success); margin-bottom:10px;">Mock Submission Recorded!</h2>
+                <p style="color:#666; margin-bottom:35px; font-size:15px;">Review your choices in the summary matrix frame below. Copy and paste this text overview back into our chat workspace to calculate scores, scan grammar metrics, and check logic path validations.</p>
+                <hr style="margin-bottom:30px; border:1px solid #DDD;">`;
+
+        orderOfSections.forEach((sec) => {
+          let count = examConfig[sec].qCount;
+          htmlBuffer += `<h3 style="color:var(--tcs-blue); text-transform:uppercase; margin-top:30px; border-bottom:2px solid #EEE; padding-bottom:5px;">${examConfig[sec].label}</h3>`;
+
+          for (let i = 0; i < count; i++) {
+            let key = `${sec}-Q${i + 1}`;
+            let qText = questionsDatabase[sec][i].text;
+            let userAns = "⚠️ NO ANSWER SUBMITTED / SKIPPED SLOT";
+
+            if (userSessionLog[key]) {
+              userAns =
+                userSessionLog[key].selected || userSessionLog[key].typed || "";
+            }
+
+            htmlBuffer += `
+                    <div class="feedback-card">
+                        <div class="feedback-q">Item ${i + 1}: ${qText}</div>
+                        <div class="feedback-a">Your Input: ${userAns}</div>
+                    </div>`;
+          }
+        });
+
+        htmlBuffer += `
+    <div style="text-align:center; margin-top:30px;">
+        <button class="btn-action" onclick="downloadResponses()">
+            Download Responses
+        </button>
+    </div>
+</div>`;
+
+        mainPanel.innerHTML = htmlBuffer;
+        document.querySelector(".left-panel").style.flex = "1";
+      }
+
+      /* Strict Anti-Cheat Script Blocks */
+      document.addEventListener("contextmenu", (e) => e.preventDefault());
+      document.addEventListener("paste", (e) => e.preventDefault());
+      document.addEventListener("cut", (e) => e.preventDefault());
+
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden && !isModalActive && !isExamPaused) {
+          isExamPaused = true;
+          document.getElementById("warningScreen").style.display = "flex";
+          clearInterval(clockInterval);
+        }
+      });
+
+      window.onbeforeunload = function () {
+        return "Assessment in progress. Are you sure?";
+      };
+      function downloadResponses() {
+        let data = "";
+
+        orderOfSections.forEach((sec) => {
+          data += "==============================\n";
+          data += examConfig[sec].label.toUpperCase() + "\n";
+          data += "==============================\n\n";
+
+          let count = examConfig[sec].qCount;
+
+          for (let i = 0; i < count; i++) {
+            let key = `${sec}-Q${i + 1}`;
+
+            let qText = questionsDatabase[sec][i].text;
+
+            let ans = "NO ANSWER";
+
+            if (userSessionLog[key]) {
+              ans =
+                userSessionLog[key].selected ||
+                userSessionLog[key].typed ||
+                "NO ANSWER";
+            }
+
+            data += `Q${i + 1}: ${qText}\n`;
+            data += `Answer: ${ans}\n\n`;
+          }
+        });
+
+        let blob = new Blob([data], {
+          type: "text/plain",
+        });
+
+        let a = document.createElement("a");
+
+        a.href = URL.createObjectURL(blob);
+
+        a.download = "TCS_Mock_Responses.txt";
+
+        a.click();
+      }
+      window.onload = function () {
+        let saved = localStorage.getItem("tcsResponses");
+        if (saved) {
+          userSessionLog = JSON.parse(saved);
+        }
+        clearInterval(clockInterval);
+        initSystem();
+        startTimerLoop();
+
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      };
+    </script>
+  </body>
+</html>
